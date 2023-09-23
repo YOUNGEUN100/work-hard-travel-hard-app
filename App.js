@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert, Button } from 'react-native';
 import {theme} from './color.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Fontisto, Octicons  } from '@expo/vector-icons'; 
@@ -15,18 +15,21 @@ export default function App() {
 
   const [tap, setTap] = useState("work"); // Work(true), Travel(false) 탭이동 
   const [text, setText] = useState(''); // 할 일 입력 텍스트
+  const [newText, setNewText] = useState('')
   const [task, setTask] = useState({}); // 할일 목록들
   const [done, setDone] = useState(false); // 완료 여부
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(false); // 수정 여부
 
   // 리로딩 될 때 마지막 탭 위치 기억
   useEffect(() => { 
     loadTap();
+    console.log(task);
   },[]);
 
   // 탭 위치가 변경될 때 할일 가져오기
   useEffect(()=>{
     loadTask();
+    console.log(task);
   },[tap])
 
   // Travel 탭을 누르면 tap 이 travel 로 바뀜
@@ -46,7 +49,6 @@ export default function App() {
   }
   // 입력 텍스트가 바뀔 때 state 변경하기
   const onChangeText = (payload) => setText(payload); 
-
   /* 할 일 모바일에 저장 */
   const saveTask = async (toSave) => { 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
@@ -63,7 +65,7 @@ export default function App() {
     }
     const newTask = { // 새로운 할 일 
       ...task, 
-      [Date.now()]: { text, tap, done }
+      [Date.now()]: { text, tap, done, edit }
     } // 기존 할 일에 새로운 할 일 객체를 합친다
     setTask(newTask); 
     await saveTask(newTask);
@@ -90,9 +92,16 @@ export default function App() {
     setTask(updateTask);
     saveTask(updateTask);
   }
-  const editTask = (key) => {
-    console.log("edit")
-  }
+  /* 할 일 수정 모드로 전환 */
+  const changeEditStatus = (key) => {
+    const updateTask = {...task};
+    updateTask[key].edit = !updateTask[key].edit;
+    setTask(updateTask);
+    saveTask(updateTask);
+   }
+   const editTask = async (key) => {
+    const updateTask = {...task};
+   }
 
   return (
     <View style={styles.container}>
@@ -118,37 +127,38 @@ export default function App() {
       </View>
       {/* 할 일 목록 부분 */}
       <ScrollView>{
-        Object.keys(task).map(key => // 키로 이루워진 배열을 반환 (Object.keys)
+        Object.keys(task).map(key =>  // 키로 이루워진 배열을 반환 (Object.keys)
           task[key].tap === tap? (
-          <View key={key} style={styles.task} >
-            <View style={styles.check}>
-              <TouchableOpacity 
-                style={styles.icon}
-                onPress={()=> toggleTask(key)}>
-                <Fontisto name={task[key].done ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.trash} /> 
-              </TouchableOpacity>
-              { edit?  // 작업중....
-                <TextInput 
+            !task[key].edit ? (
+              <View key={key} style={styles.task} >
+                <View style={styles.check}>
+                  <TouchableOpacity 
+                    style={styles.icon}
+                    onPress={()=> toggleTask(key)}>
+                    <Fontisto name={task[key].done ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.trash} /> 
+                  </TouchableOpacity>
+                  <Text 
+                      style={{...styles.taskText, textDecorationLine: task[key].done? "line-through" : "none"}}>
+                      {task[key].text}
+                    </Text> 
+                </View>
+                <View style={styles.icons}>
+                  <TouchableOpacity onPress={()=> changeEditStatus(key)} style={styles.icon}>
+                    <Octicons name="pencil" size={24} color={theme.trash} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={()=> deleteTask(key)}>
+                    <Fontisto name="trash" size={20} color={theme.trash} />
+                  </TouchableOpacity>
+                </View>
+              </View> ) : (
+                // 할일 수정 부분
+              <TextInput 
                 onSubmitEditing={editTask}
+                onChangeText={(newText)=>setNewText(newText)}
                 returnKeyType="done" 
                 value={task[key].text}
-                style={styles.editInput} 
-                />  
-              : <Text 
-                  style={{...styles.taskText, textDecorationLine: task[key].done? "line-through" : "none"}}>
-                  {task[key].text}
-                </Text> 
-              }
-              </View>
-            <View style={styles.icons}>
-              <TouchableOpacity style={styles.icon}>
-                <Octicons name="pencil" size={24} color={theme.trash} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={()=> deleteTask(key)}>
-                <Fontisto name="trash" size={20} color={theme.trash} />
-              </TouchableOpacity>
-            </View>
-          </View> 
+                style={styles.editInput} />  
+              )
           ) : null
           )}
       </ScrollView>
@@ -171,8 +181,13 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     color: "black",
     fontSize: 15,
-    borderRadius: 5,
-    paddingHorizontal: 5,
+    marginBottom: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   check: {
     flexDirection: "row",

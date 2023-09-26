@@ -6,4 +6,7 @@
 - 입력된 할 일들은 AsyncStorage 를 사용하여 모바일에 저장한다.
 - 할 일을 삭제할 수 있다. Alert(알림)으로 삭제할 건지 다시 확인한다. 삭제를 한다면 객체의 key 값을 받아서 해당 할 일을 삭제한다. 
 - 한 일(Done)을 체크할 수 있다. 체크박스를 누르면 체크된 박스로 아이콘을 변경하고 텍스트에 가로줄을 긋는다. 해당 객체의 done 을 false 에서 true 로 변경.
-- (구현중) 할 일 수정
+- 할 일 수정
+## 영상
+https://github.com/YOUNGEUN100/work-hard-travel-hard-app/assets/121986519/0337004d-ddb7-439a-8cba-41e4bf533c6c
+

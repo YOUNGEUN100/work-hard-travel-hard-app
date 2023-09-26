@@ -7,7 +7,7 @@ import { Fontisto, Octicons  } from '@expo/vector-icons';
 
 // (v) 과제1 : 탭 시작을 기억하기
 // (v) 과제2 : 완성으로 바꾸기 (삭제하지 말고)
-// 과제3 : 할일 텍스트 수정하기
+// (v) 과제3 : 할일 텍스트 수정하기
 
 const STORAGE_KEY = "@task";
 
@@ -15,7 +15,7 @@ export default function App() {
 
   const [tap, setTap] = useState("work"); // Work(true), Travel(false) 탭이동 
   const [text, setText] = useState(''); // 할 일 입력 텍스트
-  const [newText, setNewText] = useState('')
+  const [newText, setNewText] = useState('') // 할일 수정할 때 쓰는 텍스트
   const [task, setTask] = useState({}); // 할일 목록들
   const [done, setDone] = useState(false); // 완료 여부
   const [edit, setEdit] = useState(false); // 수정 여부
@@ -98,9 +98,15 @@ export default function App() {
     updateTask[key].edit = !updateTask[key].edit;
     setTask(updateTask);
     saveTask(updateTask);
+    setNewText(updateTask[key].text);
    }
    const editTask = async (key) => {
-    const updateTask = {...task};
+    const updateTask = { ...task };
+    updateTask[key].text = newText; // newText 상태를 사용하여 텍스트 업데이트
+    updateTask[key].edit = false; // 수정 모드 종료
+    setTask(updateTask);
+    saveTask(updateTask);
+    setNewText(''); // 수정 후 newText 초기화
    }
 
   return (
@@ -128,8 +134,8 @@ export default function App() {
       {/* 할 일 목록 부분 */}
       <ScrollView>{
         Object.keys(task).map(key =>  // 키로 이루워진 배열을 반환 (Object.keys)
-          task[key].tap === tap? (
-            !task[key].edit ? (
+          task[key].tap === tap? (  // work / travel 탭 확인
+            !task[key].edit ? (  // 수정모드를 눌렀는지 
               <View key={key} style={styles.task} >
                 <View style={styles.check}>
                   <TouchableOpacity 
@@ -152,12 +158,15 @@ export default function App() {
                 </View>
               </View> ) : (
                 // 할일 수정 부분
-              <TextInput 
-                onSubmitEditing={editTask}
-                onChangeText={(newText)=>setNewText(newText)}
-                returnKeyType="done" 
-                value={task[key].text}
-                style={styles.editInput} />  
+              <View key={key}>
+                <TextInput  
+                  onSubmitEditing={() => editTask(key)}
+                  onChangeText={setNewText}
+                  returnKeyType="done"
+                  value={newText}
+                  style={styles.editInput} 
+                />
+              </View>
               )
           ) : null
           )}

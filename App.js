@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert, Button } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Pressable, TextInput, ScrollView, Alert, Platform } from 'react-native';
 import {theme} from './color.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Fontisto, Octicons  } from '@expo/vector-icons'; 
@@ -45,7 +45,9 @@ export default function App() {
   // 로딩될때 탭 위치 가져오기
   const loadTap = async () => {
     const t = await AsyncStorage.getItem("tap");
-    setTap(t);
+    if (t) {
+      setTap(t);
+    }
   }
   // 입력 텍스트가 바뀔 때 state 변경하기
   const onChangeText = (payload) => setText(payload); 
@@ -56,7 +58,9 @@ export default function App() {
   /* 할 일 모바일 내용 가져오기 */
   const loadTask = async() => { 
     const s = await AsyncStorage.getItem(STORAGE_KEY)
-    setTask(JSON.parse(s)); // 할일 목록들에 가져온 내용 넣기
+    if (s) {
+      setTask(JSON.parse(s)); // 할일 목록들에 가져온 내용 넣기
+    }
   };
   /* 할일 추가 */
   const addTask = async () => {  // 할일을 추가하면 text 를 비운다
@@ -73,17 +77,27 @@ export default function App() {
   };
   /* 할일 삭제 */
   const deleteTask = async (key) => {
-    Alert.alert("Delete To Do", "Are you sure?", [
-      {text:"Cancel"},
-      {text: "I'm Sure",
-        onPress: () => { 
-          const newTask = {...task};
-          delete newTask[key];
-          setTask(newTask); 
-          saveTask(newTask);
+    if (Platform.OS === "web") {
+      const ok = confirm("Do you want to delete this To Do");
+      if (ok) {
+        const newTask = {...task};
+        delete newTask[key];
+        setTask(newTask); 
+        saveTask(newTask);
+      }
+    } else {
+      Alert.alert("Delete To Do", "Are you sure?", [
+        {text:"Cancel"},
+        {text: "I'm Sure",
+          onPress: () => { 
+            const newTask = {...task};
+            delete newTask[key];
+            setTask(newTask); 
+            saveTask(newTask);
+          },
         },
-      },
-    ]);
+      ]);  
+    }
   }
   /* 할 일 체크 토글 */
   const toggleTask = async (key) => {
@@ -114,19 +128,19 @@ export default function App() {
       <StatusBar style="light" />
       {/* 탭 부분 */}
       <View style={styles.header}> 
-        <TouchableOpacity onPress={work}>
+        <Pressable onPress={work}>
           <Text style={{...styles.btnText, color: (tap==="work")? "white" : theme.gray}}>Work</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={travel}>
+        </Pressable>
+        <Pressable onPress={travel}>
           <Text style={{...styles.btnText, color: (tap==="travel")? "white" : theme.gray }}>Travel</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
       {/* 할 일 입력 부분 */}
       <View>
         <TextInput 
           onSubmitEditing={addTask}
           onChangeText={onChangeText} // 텍스트가 바뀔때 실행
-          returnKeyType="done" // 키보드 컨트롤
+          enterKeyHint="done" // 키보드 컨트롤
           value={text}
           placeholder={(tap === "work")? "Add a To do" : "Where do you want do go?"} 
           style={styles.input} />
@@ -138,23 +152,23 @@ export default function App() {
             !task[key].edit ? (  // 수정모드를 눌렀는지 
               <View key={key} style={styles.task} >
                 <View style={styles.check}>
-                  <TouchableOpacity 
+                  <Pressable 
                     style={styles.icon}
                     onPress={()=> toggleTask(key)}>
                     <Fontisto name={task[key].done ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.trash} /> 
-                  </TouchableOpacity>
+                  </Pressable>
                   <Text 
                       style={{...styles.taskText, textDecorationLine: task[key].done? "line-through" : "none"}}>
                       {task[key].text}
                     </Text> 
                 </View>
                 <View style={styles.icons}>
-                  <TouchableOpacity onPress={()=> changeEditStatus(key)} style={styles.icon}>
+                  <Pressable onPress={()=> changeEditStatus(key)} style={styles.icon}>
                     <Octicons name="pencil" size={24} color={theme.trash} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={()=> deleteTask(key)}>
+                  </Pressable>
+                  <Pressable onPress={()=> deleteTask(key)}>
                     <Fontisto name="trash" size={20} color={theme.trash} />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View> ) : (
                 // 할일 수정 부분
@@ -162,7 +176,7 @@ export default function App() {
                 <TextInput  
                   onSubmitEditing={() => editTask(key)}
                   onChangeText={setNewText}
-                  returnKeyType="done"
+                  enterKeyHint="done"
                   value={newText}
                   style={styles.editInput} 
                 />

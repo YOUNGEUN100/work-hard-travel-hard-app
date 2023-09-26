@@ -23,13 +23,13 @@ export default function App() {
   // 리로딩 될 때 마지막 탭 위치 기억
   useEffect(() => { 
     loadTap();
-    console.log(task);
+    // console.log(task);
   },[]);
 
   // 탭 위치가 변경될 때 할일 가져오기
   useEffect(()=>{
     loadTask();
-    console.log(task);
+    // console.log(task);
   },[tap])
 
   // Travel 탭을 누르면 tap 이 travel 로 바뀜
